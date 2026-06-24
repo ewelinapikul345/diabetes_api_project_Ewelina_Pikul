@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
 import joblib
 import numpy as np
 import os
@@ -8,7 +10,15 @@ import uvicorn
 
 app = FastAPI(title="Diabetes Prediction API")
 
-model = tf.keras.models.load_model('diabetes_model_clean.h5', compile=False)
+model = Sequential([
+    Dense(32, activation='relu', input_shape=(8,)),
+    Dense(16, activation='relu'),
+    Dropout(0.2),
+    Dense(1, activation='sigmoid')
+])
+
+model.load_weights('diabetes.weights.h5')
+
 scaler = joblib.load('scaler.pkl')
 
 class PatientData(BaseModel):
