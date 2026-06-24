@@ -29,3 +29,9 @@ def predict_diabetes(data: PatientData):
     prediction = model.predict(scaled_data)
     probability = float(prediction[0][0])
     return {"diabetes_probability": probability, "is_diabetic": bool(probability > 0.5)}
+    
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
