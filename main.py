@@ -3,9 +3,13 @@ from pydantic import BaseModel
 import tensorflow as tf
 import joblib
 import numpy as np
+import uvicorn
+import os
 
 app = FastAPI(title="Diabetes Prediction API")
-model = tf.keras.models.load_model('diabetes_model.h5')
+
+model = tf.keras.models.load_model('diabetes_model.h5', compile=False)
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 scaler = joblib.load('scaler.pkl')
 
 class PatientData(BaseModel):
@@ -25,13 +29,17 @@ def predict_diabetes(data: PatientData):
         data.SkinThickness, data.Insulin, data.BMI, 
         data.DiabetesPedigreeFunction, data.Age
     ]])
+    
     scaled_data = scaler.transform(input_data)
+    
     prediction = model.predict(scaled_data)
     probability = float(prediction[0][0])
-    return {"diabetes_probability": probability, "is_diabetic": bool(probability > 0.5)}
     
+    return {
+        "diabetes_probability": probability, 
+        "is_diabetic": bool(probability > 0.5)
+    }
+
 if __name__ == "__main__":
-    import uvicorn
-    import os
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
