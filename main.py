@@ -8,7 +8,7 @@ import uvicorn
 
 app = FastAPI(title="Diabetes Prediction API")
 
-model = tf.saved_model.load('diabetes_model_saved')
+model = tf.keras.models.load_model('diabetes_model_clean.h5', compile=False)
 scaler = joblib.load('scaler.pkl')
 
 class PatientData(BaseModel):
@@ -30,19 +30,10 @@ def predict_diabetes(data: PatientData):
     ]], dtype=np.float32)
     
     scaled_data = scaler.transform(input_data)
+    prediction = model.predict(scaled_data)
+    probability = float(prediction[0][0])
     
-    infer = model.signatures["serving_default"]
-    tensor_input = tf.convert_to_tensor(scaled_data)
-    
-    input_key = list(infer.structured_input_signature[1].keys())[0]
-    prediction = infer(**{input_key: tensor_input})
-    
-    probability = float(list(prediction.values())[0].numpy()[0][0])
-    
-    return {
-        "diabetes_probability": probability, 
-        "is_diabetic": bool(probability > 0.5)
-    }
+    return {"diabetes_probability": probability, "is_diabetic": bool(probability > 0.5)}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
